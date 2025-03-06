@@ -13,10 +13,12 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
   bool _isLoading = false;
   String? _errorMessage;
 
-  //  Thêm dispose() để giải phóng bộ nhớ
+  bool _isObscure = true; // Flag để đoi mật khẩu thành mật khẩu đã mã hóa.
   @override
   void dispose() {
     _emailController.dispose();
@@ -25,112 +27,217 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _signIn() async {
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      // Hiển thị thông báo thành công
-      if (userCredential.user != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Đăng nhập thành công!'),
-        ));
-      }
 
-      // Chuyển sang trang HomeScreen sau khi đăng nhập thành công
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(),
-        ),
+      _showSnackBar('Đăng nhập thành công!', Colors.green);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } on FirebaseAuthException catch (e) {
-      String errorMessage;
       setState(() {
-        switch (e.code) {
-          case 'invalid-email':
-            _errorMessage = "Email không hợp lệ!";
-            break;
-          case 'user-not-found':
-            _errorMessage = "Không tìm thấy tài khoản!";
-            break;
-          case 'wrong-password':
-            _errorMessage = "Mật khẩu không đúng!";
-            break;
-          case 'user-disabled':
-            _errorMessage = "Tài khoản đã bị vô hiệu hóa!";
-            break;
-          default:
-            _errorMessage = e.message ?? "Đăng nhập thất bại!";
-        }
+        _errorMessage = _getErrorMessage(e.code);
       });
-
-      // Hiển thị thông báo lỗi lên app
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_errorMessage!),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } catch (e) {
-      // Lỗi không xác định
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Lỗi hệ thống: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showSnackBar(_errorMessage!, Colors.red);
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
+  }
+
+  String _getErrorMessage(String code) {
+    switch (code) {
+      case 'invalid-email':
+        return "Email không hợp lệ!";
+      case 'user-not-found':
+        return "Không tìm thấy tài khoản!";
+      case 'wrong-password':
+        return "Mật khẩu không đúng!";
+      default:
+        return "Đăng nhập thất bại!";
+    }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: color),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            SizedBox(height: 10),
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            SizedBox(height: 10),
-            if (_errorMessage != null)
-              Text(_errorMessage!, style: TextStyle(color: Colors.red)),
-            SizedBox(height: 10),
-            _isLoading
-                ? CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _signIn,
-                    child: Text('Login'),
+      body: Stack(
+        children: [
+          _buildBackground(),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          "Đăng nhập",
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Email input
+                        _buildTextField(
+                          label: "Email",
+                          controller: _emailController,
+                          icon: Icons.email,
+                          validator: (value) => value!.isEmpty
+                              ? "Email không được để trống"
+                              : null,
+                        ),
+                        const SizedBox(height: 15),
+
+                        // Password input
+                        _buildTextField(
+                          label: "Mật khẩu",
+                          controller: _passwordController,
+                          icon: Icons.lock,
+                          isPassword: true,
+                          validator: (value) => value!.length < 6
+                              ? "Mật khẩu ít nhất 6 ký tự"
+                              : null,
+                        ),
+                        const SizedBox(height: 15),
+
+                        // Error message
+                        if (_errorMessage != null)
+                          Text(
+                            _errorMessage!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        const SizedBox(height: 15),
+
+                        _isLoading
+                            ? const CircularProgressIndicator()
+                            : ElevatedButton(
+                                onPressed: _signIn,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 100, vertical: 15),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                ),
+                                child: const Text(
+                                  "Đăng nhập",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18),
+                                ),
+                              ),
+
+                        const SizedBox(height: 10),
+
+                        // Chuyển sang màn hình đăng ký
+                        TextButton(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SignUpScreen()),
+                          ),
+                          child: Text(
+                            "Chưa có tài khoản? Đăng ký ngay!",
+                            style: TextStyle(color: Colors.grey[700]),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-          
-            ElevatedButton(onPressed: (){
-              Navigator.push(context, MaterialPageRoute(builder: (context) => SignUpScreen(),),);
-            } , 
-               child: Text('Signup'),),
-          ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Background
+  Widget _buildBackground() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.green.shade600, Colors.lightGreen.shade600],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
       ),
+    );
+  }
+
+  // TextFormField
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    bool isPassword = false,
+    required String? Function(String?) validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText:
+          isPassword ? _isObscure : false, //  Hiển thị hoặc ẩn nội dung ô nhập.
+      keyboardType: isPassword
+          ? TextInputType.visiblePassword
+          : TextInputType.emailAddress,
+      // TextInputType.emailAddress giúp hiển thị bàn phím với ký tự @ và . cho email.
+      // TextInputType.visiblePassword giúp tối ưu bàn phím khi nhập mật khẩu.
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: Colors.green),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(
+            color: Colors.green,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  _isObscure ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey[700],
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isObscure = !_isObscure;
+                  });
+                },
+              )
+            : null,
+      ),
+      validator: validator, // Kiểm tra xem dữ liệu nhập vào có hợp lệ không.
     );
   }
 }
