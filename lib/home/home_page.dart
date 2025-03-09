@@ -47,8 +47,7 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _isVisible = false;
         });
-      } else if (HomePage
-              ._scrollController.position.userScrollDirection ==
+      } else if (HomePage._scrollController.position.userScrollDirection ==
           ScrollDirection.forward) {
         // ScrollDirection.forward: cuộn xuống
         setState(() {
@@ -60,11 +59,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    Size screenSize = MediaQuery.of(context).size;
-    double screenWidth = screenSize.width;
-    double screenHeight = screenSize.height;
+    // Size screenSize = MediaQuery.of(context).size;
+    // double screenWidth = screenSize.width;
+    // double screenHeight = screenSize.height;
 
-    print("Chiều rộng: $screenWidth, Chiều cao: $screenHeight");
+    // print("Chiều rộng: $screenWidth, Chiều cao: $screenHeight");
 
     return MaterialApp(
       home: Scaffold(

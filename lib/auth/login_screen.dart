@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:grab_app/auth/auth_service.dart';
 import 'package:grab_app/auth/signup_screen.dart';
 import 'package:grab_app/home/home_page.dart';
 
@@ -94,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text(
-                          "Đăng nhập",
+                          "Login",
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -116,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         // Password input
                         _buildTextField(
-                          label: "Mật khẩu",
+                          label: "Password",
                           controller: _passwordController,
                           icon: Icons.lock,
                           isPassword: true,
@@ -146,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       borderRadius: BorderRadius.circular(12)),
                                 ),
                                 child: const Text(
-                                  "Đăng nhập",
+                                  "Login",
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -157,17 +158,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 10),
 
                         // Chuyển sang màn hình đăng ký
-                        TextButton(
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => SignUpScreen()),
-                          ),
-                          child: Text(
-                            "Chưa có tài khoản? Đăng ký ngay!",
-                            style: TextStyle(color: Colors.grey[700]),
-                          ),
-                        ),
+                        _buildSignupRedirect(),
+
+                        SizedBox(height: 10),
+
+                        LoginWithGoogle(),
                       ],
                     ),
                   ),
@@ -238,6 +233,42 @@ class _LoginScreenState extends State<LoginScreen> {
             : null,
       ),
       validator: validator, // Kiểm tra xem dữ liệu nhập vào có hợp lệ không.
+    );
+  }
+
+  // Chuyển sang màn hình đăng ký
+  Widget _buildSignupRedirect() {
+    return Center(
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: "Don't have an account?",
+              style: TextStyle(),
+            ),
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SignUpScreen(),
+                    ),
+                  );
+                },
+                child: Text(
+                  'Sign up',
+                  style: TextStyle(
+                    color: Colors.blue[500],
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
