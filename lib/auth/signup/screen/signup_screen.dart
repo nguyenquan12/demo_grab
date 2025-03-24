@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:grab_app/auth/login_screen.dart';
+import 'package:grab_app/auth/login/screen/login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   @override

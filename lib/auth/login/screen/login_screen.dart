@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:grab_app/auth/auth_service.dart';
-import 'package:grab_app/auth/signup_screen.dart';
+import 'package:grab_app/auth/login/authentication/auth_google.dart';
+import 'package:grab_app/auth/signup/screen/auth_phonenumber_screen.dart';
+import 'package:grab_app/auth/signup/screen/signup_screen.dart';
 import 'package:grab_app/home/home_page.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -135,6 +136,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         const SizedBox(height: 15),
 
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      AuthPhonenumberScreen()),
+                            );
+                          },
+                          child: Text(
+                            "Log in with your phone number",
+                            style: const TextStyle(color: Colors.blue),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
                         _isLoading
                             ? const CircularProgressIndicator()
                             : ElevatedButton(
